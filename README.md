@@ -78,5 +78,5 @@ HTML5 · CSS3 · Vanilla JavaScript · localStorage · Google Fonts
 ## Contributors
 
 - Dheznaia KT
-- A1
+- Rivaldi Tri Anggara
 - A2
