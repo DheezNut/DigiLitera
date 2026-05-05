@@ -72,3 +72,11 @@ HTML5 · CSS3 · Vanilla JavaScript · localStorage · Google Fonts
 - Belum ada dashboard guru untuk memantau progres siswa
 - Efektivitas belum divalidasi melalui penelitian empiris
 - Penambahan modul masih dilakukan secara manual via kode
+
+---
+
+## Contributors
+
+- Dheznaia KT
+- A1
+- A2
