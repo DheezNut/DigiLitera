@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DigiLitera — Literasi Digital untuk Remaja</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400;1,9..144,700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/screens.css">
+</head>
+<body>
+
+  <!-- ══ SCREENS ══ -->
+  <div id="home"       class="screen active"></div>
+  <div id="materi"     class="screen"></div>
+  <div id="quiz"       class="screen"></div>
+  <div id="result"     class="screen"></div>
+  <div id="scoreboard" class="screen"></div>
+
+  <!-- ══ MODULES DATA ══ -->
+  <script src="modules/mod-hoaks.js"></script>
+  <script src="modules/mod-etika.js"></script>
+  <script src="modules/mod-privasi.js"></script>
+
+  <!-- ══ MODULE REGISTRY ══ -->
+  <script>
+    // Register all modules here — add new modules by pushing to this array
+    const MODULES = [MOD_HOAKS, MOD_ETIKA, MOD_PRIVASI];
+  </script>
+
+  <!-- ══ APP SCRIPTS ══ -->
+  <script src="js/quiz.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
