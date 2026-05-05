@@ -55,7 +55,7 @@ DigiLitera/
 Clone repository lalu buka `index.html` langsung di browser. Atau akses versi online di GitHub Pages:
 
 ```
-https://username.github.io/DigiLitera
+https://dheeznut.github.io/DigiLitera/
 ```
 
 ---
