@@ -79,4 +79,4 @@ HTML5 · CSS3 · Vanilla JavaScript · localStorage · Google Fonts
 
 - Dheznaia KT
 - Rivaldi Tri Anggara
-- A2
+- Krishanty
