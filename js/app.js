@@ -26,6 +26,7 @@ function addScore(modId, entry) {
   Store.save(_data);
 }
 function addXP(amount) {
+  if (amount <= 0) return;
   _data.xp = (_data.xp || 0) + amount;
   Store.save(_data);
 }
@@ -213,27 +214,44 @@ const Materi = {
 ───────────────────────────────────── */
 const Result = {
   _state: null,
+  _saved: false, // flag cegah double-save
 
   show(quizState) {
     this._state = quizState;
+    this._saved = false; // reset flag setiap kuis baru
+
     const { mod, score, corr, questions } = quizState;
     const tot  = questions.length;
     const maxS = tot * 20;
     const pct  = Math.round((score / maxS) * 100);
-    const { g, rc, gc, gd } = calcGrade(pct);
-    const xpEarned = Math.round(pct);
-    addXP(xpEarned);
+    const { g, rc } = calcGrade(pct);
+
+    // Hitung XP yang akan didapat (selisih dari skor terbaik sebelumnya)
+    const prevBestScore = (getScores()[mod.id] || []).reduce((max, s) => Math.max(max, s.sc), 0);
+    const prevBestPct   = Math.round((prevBestScore / maxS) * 100);
+    const xpEarned      = Math.max(0, Math.round(pct) - Math.round(prevBestPct));
+
+    // Simpan xpEarned ke state agar bisa dipakai di _save()
+    this._state.xpEarned    = xpEarned;
+    this._state.prevBestScore = prevBestScore;
 
     const msg = pct >= 90 ? "Luar biasa! Kamu benar-benar paham materi ini!"
       : pct >= 75 ? "Bagus! Sebagian besar sudah dikuasai dengan baik."
       : pct >= 55 ? "Lumayan! Masih ada beberapa bagian yang perlu diulas."
       : "Jangan menyerah — baca ulang materinya dan coba lagi!";
 
+    // Banner XP: tampilkan info yang akurat sebelum simpan
+    const xpBanner = xpEarned > 0
+      ? `<div class="xp-earned-banner">⭐ +${xpEarned} XP akan kamu dapatkan!</div>`
+      : prevBestScore > 0
+        ? `<div class="xp-earned-banner xp-no-gain">Skor tidak melampaui rekor sebelumnya — XP tidak bertambah.</div>`
+        : `<div class="xp-earned-banner">⭐ +${Math.round(pct)} XP akan kamu dapatkan!</div>`;
+
     document.getElementById('result').innerHTML = `
       <div class="topbar">
         <button class="icon-btn" onclick="App.goHome()">←</button>
         <span class="topbar-title">Hasil Kuis</span>
-        <button class="icon-btn" onclick="App.toggleTheme();Result.show(quizState)">${App.themeIcon()}</button>
+        <button class="icon-btn" onclick="App.toggleTheme();Result.show(Result._state)">${App.themeIcon()}</button>
       </div>
       <div class="result-wrap">
         <div class="res-ring ${rc}">${g}</div>
@@ -246,23 +264,36 @@ const Result = {
           <div class="stat-box"><div class="stat-val">${corr}/${tot}</div><div class="stat-lbl">Benar</div></div>
           <div class="stat-box"><div class="stat-val">${pct}%</div><div class="stat-lbl">Akurasi</div></div>
         </div>
-        <div class="xp-earned-banner">⭐ +${xpEarned} XP didapat dari kuis ini!</div>
+        ${xpBanner}
         <div class="name-block">
           <p>Masukkan nama untuk papan skor:</p>
           <input id="player-name" type="text" placeholder="Nama kamu..." maxlength="22"/>
         </div>
-        <button class="btn-primary" onclick="Result._save()">🏆 Simpan & Lihat Papan Skor</button>
+        <button class="btn-primary" id="btn-save" onclick="Result._save()">🏆 Simpan & Lihat Papan Skor</button>
         <button class="btn-secondary" onclick="Materi.open(Result._state.mod)">📖 Ulangi Materi</button>
         <button class="btn-secondary" onclick="App.goHome()">🏠 Kembali ke Beranda</button>
       </div>`;
+
     App.show('result');
   },
 
   _save() {
+    // Cegah double-save jika tombol diklik lebih dari sekali
+    if (this._saved) return;
+    this._saved = true;
+
+    // Disable tombol simpan secara visual
+    const btn = document.getElementById('btn-save');
+    if (btn) { btn.disabled = true; btn.textContent = '✅ Tersimpan!'; }
+
     const nm  = (document.getElementById('player-name').value || '').trim() || 'Anonim';
-    const { mod, score, questions } = this._state;
+    const { mod, score, questions, xpEarned } = this._state;
     const pct = Math.round((score / (questions.length * 20)) * 100);
     const { g } = calcGrade(pct);
+
+    // Tambah XP hanya di sini, hanya selisih peningkatan
+    addXP(xpEarned);
+
     addScore(mod.id, { nm, sc: score, pct, g, ts: Date.now() });
     Scoreboard.open(mod.id);
   }
