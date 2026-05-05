@@ -37,7 +37,9 @@ const Quiz = (() => {
     const q   = state.questions[state.idx];
     const tot = state.questions.length;
     const pct = Math.round((state.idx / tot) * 100);
-    clearInterval(state.tmr);
+
+    // FIX #1 & #2: Pastikan timer lama benar-benar berhenti sebelum render baru
+    if (state.tmr) { clearInterval(state.tmr); state.tmr = null; }
     ddSel = null;
 
     const ti = TYPE_INFO[q.tp] || { label: q.tp, emoji: "❓", time: 30 };
@@ -93,7 +95,7 @@ const Quiz = (() => {
         <span class="opt-letter">${letters[i]}</span>
         <span class="opt-text">${o}</span>
       </button>`).join('');
-    return `<div class="opts-list">${opts}</div><div class="qfb" id="qfb"></div>`;
+    return `<div class="opts-list">${opts}</div><div class="qfb" id="qfb"></div><div class="qfb-next" id="qfb-next"></div>`;
   }
 
   /* TRUE/FALSE */
@@ -104,7 +106,7 @@ const Quiz = (() => {
         <button class="tf-btn tf-true"  id="tf-t" onclick="Quiz._answerTF(true)">✅ Benar</button>
         <button class="tf-btn tf-false" id="tf-f" onclick="Quiz._answerTF(false)">❌ Salah</button>
       </div>
-      <div class="qfb" id="qfb"></div>`;
+      <div class="qfb" id="qfb"></div><div class="qfb-next" id="qfb-next"></div>`;
   }
 
   /* DRAG-DROP */
@@ -130,7 +132,7 @@ const Quiz = (() => {
       <p class="dd-hint">Pilih jawaban (chip biru) → klik kotak untuk memasangkan.<br>Klik <span style="color:var(--red);font-weight:700">✕ merah</span> untuk membatalkan pilihan.</p>
       <div class="dd-pool" id="dd-pool">${chipsHTML}</div>
       <div class="dd-pairs">${rowsHTML}</div>
-      <div class="qfb" id="qfb"></div>
+      <div class="qfb" id="qfb"></div><div class="qfb-next" id="qfb-next"></div>
       <button class="btn-check" id="dd-check-btn" onclick="Quiz._checkDrag(false)">✓ Periksa Jawaban</button>`;
   }
 
@@ -147,7 +149,7 @@ const Quiz = (() => {
     return `
       <p class="stf-hint">Pilih <strong>SEMUA</strong> item yang merupakan hoaks / tindakan salah (bisa lebih dari satu).</p>
       <div class="stf-grid">${cardsHTML}</div>
-      <div class="qfb" id="qfb"></div>
+      <div class="qfb" id="qfb"></div><div class="qfb-next" id="qfb-next"></div>
       <button class="btn-check" id="stf-check-btn" onclick="Quiz._checkSTF(false)">✓ Konfirmasi Pilihan</button>`;
   }
 
@@ -162,24 +164,34 @@ const Quiz = (() => {
       </div>
       <p class="scenario-q-lbl">Apa tindakan terbaik?</p>
       <div class="scenario-opts">${optsHTML}</div>
-      <div class="qfb" id="qfb"></div>`;
+      <div class="qfb" id="qfb"></div><div class="qfb-next" id="qfb-next"></div>`;
   }
 
   /* ─────────────────────────
      TIMER
+     FIX #1: Gunakan deadline berbasis Date.now() agar tidak drift di desktop.
+             Poll setiap 250ms supaya stop tepat di 0, tidak minus.
   ───────────────────────── */
   function _startTimer() {
+    const deadline = Date.now() + state.tl * 1000;
     state.tmr = setInterval(() => {
-      state.tl--;
+      const remaining = Math.ceil((deadline - Date.now()) / 1000);
+      state.tl = Math.max(0, remaining);
       const el = document.getElementById('qz-timer');
       if (el) {
         el.textContent = state.tl + 's';
         el.className = 'qz-timer' + (state.tl <= 8 ? ' danger' : state.tl <= 18 ? ' warning' : '');
       }
-      if (state.tl <= 0) { clearInterval(state.tmr); _timeUp(); }
-    }, 1000);
+      if (state.tl <= 0) {
+        clearInterval(state.tmr);
+        state.tmr = null;
+        _timeUp();
+      }
+    }, 250);
   }
 
+  /* FIX #2: _timeUp tidak langsung auto-advance.
+             Panggil _showNextBtn agar user yang klik "Lanjut". */
   function _timeUp() {
     const q = state.questions[state.idx];
     _showFB(false, '⏰ Waktu habis! ' + q.ex);
@@ -188,14 +200,14 @@ const Quiz = (() => {
     if (q.tp === 'scenario') { document.querySelectorAll('.sc-opt').forEach(b => b.disabled = true); const e = document.getElementById('sco' + q.ans); if (e) e.classList.add('ok'); }
     if (q.tp === 'drag')     { _checkDrag(true); return; }
     if (q.tp === 'stf')      { _checkSTF(true); return; }
-    setTimeout(_nextQ, 2200);
+    _showNextBtn();
   }
 
   /* ─────────────────────────
      ANSWER HANDLERS
   ───────────────────────── */
   function _answerMCQ(i) {
-    clearInterval(state.tmr);
+    clearInterval(state.tmr); state.tmr = null;
     const q = state.questions[state.idx];
     document.querySelectorAll('.opt').forEach(b => b.disabled = true);
     const ok = i === q.ans;
@@ -204,11 +216,12 @@ const Quiz = (() => {
     document.getElementById('opt' + i).classList.add(ok ? 'ok' : 'no');
     if (!ok) document.getElementById('opt' + q.ans).classList.add('ok');
     _showFB(ok, ok ? `Benar! +${10 + bonus} poin (bonus waktu +${bonus})` : 'Salah. ' + q.ex);
-    setTimeout(_nextQ, 2100);
+    // FIX #4: tampilkan tombol Lanjut agar user bisa baca penjelasan dulu
+    _showNextBtn();
   }
 
   function _answerTF(val) {
-    clearInterval(state.tmr);
+    clearInterval(state.tmr); state.tmr = null;
     const q = state.questions[state.idx];
     const ok = val === q.ans;
     const bonus = Math.max(0, Math.floor(state.tl / 3));
@@ -222,7 +235,7 @@ const Quiz = (() => {
       if (wrongBtn) wrongBtn.classList.add('tf-wrong');
     }
     _showFB(ok, ok ? `Tepat! +${10 + bonus} poin` : 'Salah. ' + q.ex);
-    setTimeout(_nextQ, 2100);
+    _showNextBtn();
   }
 
   function _pickChip(i, v, el) {
@@ -281,15 +294,19 @@ const Quiz = (() => {
   function _checkDrag(forced) {
     if (state.drag.locked) return;
     state.drag.locked = true;
-    clearInterval(state.tmr);
+    clearInterval(state.tmr); state.tmr = null;
     const { shuf, ans, pairs } = state.drag;
     let ok = 0;
     shuf.forEach((p, i) => {
       const slot = document.getElementById('dds' + i);
-      if (ans[i] === p.m)  { slot.classList.add('ok'); ok++; }
-      else if (ans[i] || forced) {
+      const txt  = document.getElementById('ddst' + i);
+      if (ans[i] === p.m) {
+        slot.classList.add('ok');
+        ok++;
+      } else {
+        // FIX #3: selalu tampilkan jawaban benar, baik slot kosong maupun salah isi
         slot.classList.add('no');
-        document.getElementById('ddst' + i).textContent = '→ ' + p.m;
+        txt.textContent = '→ ' + p.m;
       }
     });
     const pts = ok * Math.ceil(20 / pairs.length);
@@ -301,7 +318,7 @@ const Quiz = (() => {
         : `${ok}/${pairs.length} benar. +${pts} poin — jawaban yang benar sudah ditampilkan.`);
     const btn = document.getElementById('dd-check-btn');
     if (btn) btn.style.display = 'none';
-    setTimeout(_nextQ, 2400);
+    _showNextBtn();
   }
 
   function _pickSTF(i) {
@@ -314,7 +331,7 @@ const Quiz = (() => {
 
   function _checkSTF(forced) {
     if (state.stf.done) return;
-    clearInterval(state.tmr);
+    clearInterval(state.tmr); state.tmr = null;
     state.stf.done = true;
     const q    = state.questions[state.idx];
     const corr = [...q.correctFake].sort().join(',');
@@ -335,11 +352,11 @@ const Quiz = (() => {
     _showFB(ok, ok ? `Tepat! Kamu menemukan semua yang salah! +${pts} poin` : q.ex);
     const btn = document.getElementById('stf-check-btn');
     if (btn) btn.style.display = 'none';
-    setTimeout(_nextQ, 2400);
+    _showNextBtn();
   }
 
   function _answerScenario(i) {
-    clearInterval(state.tmr);
+    clearInterval(state.tmr); state.tmr = null;
     const q = state.questions[state.idx];
     document.querySelectorAll('.sc-opt').forEach(b => b.disabled = true);
     const ok    = i === q.ans;
@@ -348,7 +365,7 @@ const Quiz = (() => {
     document.getElementById('sco' + i).classList.add(ok ? 'ok' : 'no');
     if (!ok) document.getElementById('sco' + q.ans).classList.add('ok');
     _showFB(ok, ok ? `Pilihan terbaik! +${15 + bonus} poin` : 'Belum tepat. ' + q.ex);
-    setTimeout(_nextQ, 2200);
+    _showNextBtn();
   }
 
   /* ─────────────────────────
@@ -359,6 +376,16 @@ const Quiz = (() => {
     if (el) { el.textContent = (ok ? '✅ ' : '❌ ') + txt; el.className = 'qfb show ' + (ok ? 'ok' : 'no'); }
     const pts = document.getElementById('qz-pts');
     if (pts) pts.textContent = '⭐ ' + state.score;
+  }
+
+  /* FIX #4: Tombol "Lanjut →" menggantikan auto-setTimeout agar user bisa
+             membaca penjelasan terlebih dahulu sebelum pindah soal. */
+  function _showNextBtn() {
+    const container = document.getElementById('qfb-next');
+    if (!container) return;
+    const isLast = state.idx >= state.questions.length - 1;
+    const label  = isLast ? 'Lihat Hasil 🏁' : 'Lanjut →';
+    container.innerHTML = `<button class="btn-next-q" onclick="Quiz._nextQ()">${label}</button>`;
   }
 
   function _nextQ() {
@@ -386,7 +413,8 @@ const Quiz = (() => {
     _checkDrag,
     _pickSTF,
     _checkSTF,
-    _answerScenario
+    _answerScenario,
+    _nextQ
   };
 
 })();
