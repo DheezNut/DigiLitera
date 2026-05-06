@@ -113,7 +113,7 @@ const Home = {
       <div class="home-header">
         <div class="home-logo">
           <div class="home-logomark">⚡</div>
-          <span class="home-logotext">DigiLit</span>
+          <span class="home-logotext">DigiLitera</span>
         </div>
         <button class="icon-btn" onclick="App.toggleTheme();Home.render()" title="Ganti Tema">${App.themeIcon()}</button>
       </div>
