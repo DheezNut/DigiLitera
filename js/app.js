@@ -124,13 +124,13 @@ const Home = {
         <p class="home-sub">Pelajari materi, selesaikan tantangan interaktif, dan bersaing di papan skor.</p>
       </div>
 
-      <div class="xp-card">
-        <div class="xp-card-row">
-          <span class="xp-card-label">📚 Progress Modul</span>
-          <span class="xp-card-val">${done} / ${total}</span>
+      <div class="prog-card">
+        <div class="prog-card-row">
+          <span class="prog-card-label">📚 Progress Modul</span>
+          <span class="prog-card-val">${done} / ${total}</span>
         </div>
-        <div class="xp-track"><div class="xp-fill" style="width:${progPct}%"></div></div>
-        <div class="xp-card-sub">${progLabel}</div>
+        <div class="prog-track"><div class="prog-fill" style="width:${progPct}%"></div></div>
+        <div class="prog-card-sub">${progLabel}</div>
       </div>
 
       <div class="section-label">Pilih Modul</div>
