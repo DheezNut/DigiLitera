@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════
-   DigiLitera — App Core
+   DigiLit — App Core
    js/app.js
 ═══════════════════════════════════════ */
 
@@ -15,8 +15,8 @@ const Store = {
 };
 
 let _data = Store.load();
-const getScores  = ()    => _data.scores  || {};
-const getTotalXP = ()    => _data.xp      || 0;
+const getScores = () => _data.scores || {};
+
 function addScore(modId, entry) {
   if (!_data.scores) _data.scores = {};
   if (!_data.scores[modId]) _data.scores[modId] = [];
@@ -25,10 +25,11 @@ function addScore(modId, entry) {
   if (_data.scores[modId].length > 25) _data.scores[modId] = _data.scores[modId].slice(0, 25);
   Store.save(_data);
 }
-function addXP(amount) {
-  if (amount <= 0) return;
-  _data.xp = (_data.xp || 0) + amount;
-  Store.save(_data);
+
+/* Hitung berapa modul yang sudah pernah disimpan skornya */
+function getModulesDone() {
+  const scores = getScores();
+  return MODULES.filter(m => scores[m.id] && scores[m.id].length > 0).length;
 }
 
 /* ── THEME ── */
@@ -59,23 +60,30 @@ function calcGrade(pct) {
   return              { g: 'C', rc: 'rC', gc: 'var(--red)', gd: 'var(--red-d)' };
 }
 
+/* ── SANITIZE (XSS prevention) ── */
+function sanitize(str) {
+  const div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
 /* ─────────────────────────────────────
    HOME
 ───────────────────────────────────── */
 const Home = {
   render() {
-    const totalXP = getTotalXP();
     const scores  = getScores();
-    const maxXP   = MODULES.length * 100;
-    const xpPct   = Math.min(100, Math.round((totalXP / maxXP) * 100));
+    const done    = getModulesDone();
+    const total   = MODULES.length;
+    const progPct = Math.round((done / total) * 100);
 
     const mods = MODULES.map(m => {
       const best = scores[m.id] && scores[m.id].length
         ? Math.max(...scores[m.id].map(s => s.sc)) : null;
       const bestTag = best !== null
-        ? `<span class="tag tg">Best: ${best}/${m.quiz.length * 20}</span>` : '';
+        ? `<span class="tag tg">Best: ${best}</span>` : '';
       const tags = m.tags.map(([c, t]) => `<span class="tag ${c}">${t}</span>`).join('');
-      const done = scores[m.id] && scores[m.id].length ? 1 : 0;
+      const isDone = scores[m.id] && scores[m.id].length > 0;
 
       return `
         <div class="mc" onclick="Home.openModule(${m.id})">
@@ -83,37 +91,46 @@ const Home = {
           <div class="mc-body">
             <div class="mc-name">${m.title}</div>
             <div class="mc-desc">${m.desc}</div>
-            <div class="mc-tags">${tags}${bestTag}</div>
+            <div class="mc-tags">${tags}${bestTag}${isDone ? '<span class="tag tg">✓ Selesai</span>' : ''}</div>
             <div class="mc-prog-track">
-              <div class="mc-prog-fill" style="width:${done * 100}%"></div>
+              <div class="mc-prog-fill" style="width:${isDone ? 100 : 0}%"></div>
             </div>
           </div>
           <div class="mc-arr">›</div>
         </div>`;
     }).join('');
 
+    let progLabel = '';
+    if (done === 0) {
+      progLabel = 'Belum ada modul yang diselesaikan';
+    } else if (done === total) {
+      progLabel = '🎉 Semua modul sudah diselesaikan!';
+    } else {
+      progLabel = `${done} dari ${total} modul selesai`;
+    }
+
     document.getElementById('home').innerHTML = `
       <div class="home-header">
         <div class="home-logo">
           <div class="home-logomark">⚡</div>
-          <span class="home-logotext">DigiLitera</span>
+          <span class="home-logotext">DigiLit</span>
         </div>
-        <button class="icon-btn" onclick="App.toggleTheme();Home.render()">${App.themeIcon()}</button>
+        <button class="icon-btn" onclick="App.toggleTheme();Home.render()" title="Ganti Tema">${App.themeIcon()}</button>
       </div>
 
       <div class="home-hero">
-        <div class="home-eyebrow">Platform Belajar Digital</div>
+        <div class="home-eyebrow">Platform Belajar Digital · SMA Kelas 10 & 11</div>
         <h1 class="home-title">Jadilah<br><em class="display">Cerdas Digital</em></h1>
         <p class="home-sub">Pelajari materi, selesaikan tantangan interaktif, dan bersaing di papan skor.</p>
       </div>
 
       <div class="xp-card">
         <div class="xp-card-row">
-          <span class="xp-card-label">⭐ XP Kamu</span>
-          <span class="xp-card-val">${totalXP} / ${maxXP}</span>
+          <span class="xp-card-label">📚 Progress Modul</span>
+          <span class="xp-card-val">${done} / ${total}</span>
         </div>
-        <div class="xp-track"><div class="xp-fill" style="width:${xpPct}%"></div></div>
-        <div class="xp-card-sub">${xpPct >= 100 ? '🎉 Semua modul selesai!' : `${maxXP - totalXP} XP lagi untuk selesai semua modul`}</div>
+        <div class="xp-track"><div class="xp-fill" style="width:${progPct}%"></div></div>
+        <div class="xp-card-sub">${progLabel}</div>
       </div>
 
       <div class="section-label">Pilih Modul</div>
@@ -214,44 +231,25 @@ const Materi = {
 ───────────────────────────────────── */
 const Result = {
   _state: null,
-  _saved: false, // flag cegah double-save
 
   show(quizState) {
     this._state = quizState;
-    this._saved = false; // reset flag setiap kuis baru
-
     const { mod, score, corr, questions } = quizState;
     const tot  = questions.length;
     const maxS = tot * 20;
     const pct  = Math.round((score / maxS) * 100);
     const { g, rc } = calcGrade(pct);
 
-    // Hitung XP yang akan didapat (selisih dari skor terbaik sebelumnya)
-    const prevBestScore = (getScores()[mod.id] || []).reduce((max, s) => Math.max(max, s.sc), 0);
-    const prevBestPct   = Math.round((prevBestScore / maxS) * 100);
-    const xpEarned      = Math.max(0, Math.round(pct) - Math.round(prevBestPct));
-
-    // Simpan xpEarned ke state agar bisa dipakai di _save()
-    this._state.xpEarned    = xpEarned;
-    this._state.prevBestScore = prevBestScore;
-
     const msg = pct >= 90 ? "Luar biasa! Kamu benar-benar paham materi ini!"
       : pct >= 75 ? "Bagus! Sebagian besar sudah dikuasai dengan baik."
       : pct >= 55 ? "Lumayan! Masih ada beberapa bagian yang perlu diulas."
       : "Jangan menyerah — baca ulang materinya dan coba lagi!";
 
-    // Banner XP: tampilkan info yang akurat sebelum simpan
-    const xpBanner = xpEarned > 0
-      ? `<div class="xp-earned-banner">⭐ +${xpEarned} XP akan kamu dapatkan!</div>`
-      : prevBestScore > 0
-        ? `<div class="xp-earned-banner xp-no-gain">Skor tidak melampaui rekor sebelumnya — XP tidak bertambah.</div>`
-        : `<div class="xp-earned-banner">⭐ +${Math.round(pct)} XP akan kamu dapatkan!</div>`;
-
     document.getElementById('result').innerHTML = `
       <div class="topbar">
         <button class="icon-btn" onclick="App.goHome()">←</button>
         <span class="topbar-title">Hasil Kuis</span>
-        <button class="icon-btn" onclick="App.toggleTheme();Result.show(Result._state)">${App.themeIcon()}</button>
+        <button class="icon-btn" onclick="App.toggleTheme();Result.show(quizState)">${App.themeIcon()}</button>
       </div>
       <div class="result-wrap">
         <div class="res-ring ${rc}">${g}</div>
@@ -264,36 +262,22 @@ const Result = {
           <div class="stat-box"><div class="stat-val">${corr}/${tot}</div><div class="stat-lbl">Benar</div></div>
           <div class="stat-box"><div class="stat-val">${pct}%</div><div class="stat-lbl">Akurasi</div></div>
         </div>
-        ${xpBanner}
         <div class="name-block">
-          <p>Masukkan nama untuk papan skor:</p>
+          <p>Masukkan nama untuk menyimpan skor ke papan peringkat:</p>
           <input id="player-name" type="text" placeholder="Nama kamu..." maxlength="22"/>
         </div>
-        <button class="btn-primary" id="btn-save" onclick="Result._save()">🏆 Simpan & Lihat Papan Skor</button>
+        <button class="btn-primary" onclick="Result._save()">🏆 Simpan & Lihat Papan Skor</button>
         <button class="btn-secondary" onclick="Materi.open(Result._state.mod)">📖 Ulangi Materi</button>
         <button class="btn-secondary" onclick="App.goHome()">🏠 Kembali ke Beranda</button>
       </div>`;
-
     App.show('result');
   },
 
   _save() {
-    // Cegah double-save jika tombol diklik lebih dari sekali
-    if (this._saved) return;
-    this._saved = true;
-
-    // Disable tombol simpan secara visual
-    const btn = document.getElementById('btn-save');
-    if (btn) { btn.disabled = true; btn.textContent = '✅ Tersimpan!'; }
-
-    const nm  = (document.getElementById('player-name').value || '').trim() || 'Anonim';
-    const { mod, score, questions, xpEarned } = this._state;
+    const nm  = sanitize((document.getElementById('player-name').value || '').trim() || 'Anonim');
+    const { mod, score, questions } = this._state;
     const pct = Math.round((score / (questions.length * 20)) * 100);
     const { g } = calcGrade(pct);
-
-    // Tambah XP hanya di sini, hanya selisih peningkatan
-    addXP(xpEarned);
-
     addScore(mod.id, { nm, sc: score, pct, g, ts: Date.now() });
     Scoreboard.open(mod.id);
   }
@@ -340,7 +324,7 @@ const Scoreboard = {
           <div class="sb-row">
             <div class="${rnkClass}">${rnk}</div>
             <div class="sb-avatar" style="background:${bg};color:${fg}">${ini}</div>
-            <div class="sb-name">${s.nm}</div>
+            <div class="sb-name">${sanitize(s.nm)}</div>
             <span class="sb-grade" style="background:${gd};color:${gc}">${s.g}</span>
             <div class="sb-score">${s.sc}</div>
           </div>`;
