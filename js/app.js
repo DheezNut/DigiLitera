@@ -119,7 +119,7 @@ const Home = {
       </div>
 
       <div class="home-hero">
-        <div class="home-eyebrow">Platform Belajar Digital · SMA Kelas 10 & 11</div>
+        <div class="home-eyebrow">Platform Belajar Digital</div>
         <h1 class="home-title">Jadilah<br><em class="display">Cerdas Digital</em></h1>
         <p class="home-sub">Pelajari materi, selesaikan tantangan interaktif, dan bersaing di papan skor.</p>
       </div>
