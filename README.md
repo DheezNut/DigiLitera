@@ -24,7 +24,7 @@ DigiLitera hadir sebagai respons atas rendahnya literasi digital pelajar Indones
 
 - 5 tipe soal interaktif — Pilihan Ganda, Benar/Salah, Susun-Pasangkan, Temukan yang Salah, Simulasi Kasus
 - Timer per soal dengan bonus poin kecepatan
-- Sistem XP dan papan skor per modul
+- Papan skor per modul
 - Dark mode & Light mode
 - Responsif di HP dan desktop
 - Tidak perlu instalasi, akun, atau koneksi internet
