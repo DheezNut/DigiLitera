@@ -287,22 +287,21 @@ h1, h2, h3, .syne { font-family: 'Plus Jakarta Sans', sans-serif; }
 
 /* ── Next Button Quiz ── */
 .qfb-next {
-  margin-top: 12px;
+  margin-top: 10px;
   display: flex;
   justify-content: flex-end;
 }
-
 .btn-next-q {
-  padding: 10px 24px;
-  border-radius: var(--border-radius-md);
+  padding: .65rem 1.4rem;
+  border-radius: 10px;
   border: none;
-  background: var(--accent, #4f46e5);
+  background: var(--acc);
   color: #fff;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s;
+  font-family: inherit;
+  transition: opacity .15s, transform .1s;
 }
-
-.btn-next-q:hover  { opacity: 0.88; }
-.btn-next-q:active { transform: scale(0.97); }
+.btn-next-q:hover  { opacity: .87; }
+.btn-next-q:active { transform: scale(.98); }
