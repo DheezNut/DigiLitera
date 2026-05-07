@@ -76,7 +76,10 @@ const Home = {
     const done    = getModulesDone();
     const total   = MODULES.length;
     const progPct = Math.round((done / total) * 100);
-
+     
+    const currentTheme = document.documentElement.dataset.theme;
+    const logoSrc = currentTheme === 'light' ? 'assets/logo-biru.png' : 'assets/logo-putih.png';
+     
     const mods = MODULES.map(m => {
       const best = scores[m.id] && scores[m.id].length
         ? Math.max(...scores[m.id].map(s => s.sc)) : null;
@@ -113,8 +116,8 @@ const Home = {
       <div class="home-header">
         <div class="home-logo">
         <div class="home-logomark">
-  <img src="assets/logo.png" alt="DigiLitera Logo" loading="eager">
-</div>
+        <img src="${logoSrc}" alt="DigiLitera Logo" loading="eager">
+         </div>
           <span class="home-logotext">DigiLitera</span>
         </div>
         <button class="icon-btn" onclick="App.toggleTheme();Home.render()" title="Ganti Tema">${App.themeIcon()}</button>
