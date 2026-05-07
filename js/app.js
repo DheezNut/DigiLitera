@@ -114,7 +114,7 @@ const Home = {
       <div class="home-header">
         <div class="home-logo">
         <div class="home-logomark">
-        <img src="${logoSrc}" alt="DigiLitera Logo" loading="eager">
+        <img src="assets/logo.png" alt="DigiLitera Logo" loading="eager">
          </div>
           <span class="home-logotext">DigiLitera</span>
         </div>
