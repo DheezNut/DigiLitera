@@ -76,9 +76,7 @@ const Home = {
     const done    = getModulesDone();
     const total   = MODULES.length;
     const progPct = Math.round((done / total) * 100);
-     
-    const currentTheme = document.documentElement.dataset.theme;
-    const logoSrc = currentTheme === 'light' ? 'assets/logo-biru.png' : 'assets/logo-putih.png';
+
      
     const mods = MODULES.map(m => {
       const best = scores[m.id] && scores[m.id].length
