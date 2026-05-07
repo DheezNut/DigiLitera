@@ -24,7 +24,11 @@
   height: 100%;
   object-fit: contain; /* Atau 'cover' jika mau full fill */
   display: block;
- 
+/* --- TAMBAHKAN KODE INI DI SINI --- */
+[data-theme="light"] .home-logomark img {
+  filter: brightness(0.9) contrast(1.1);
+     
+     
 }
 .home-logotext { font-size: 14px; font-weight: 800; color: var(--text); letter-spacing: -.02em; }
 
