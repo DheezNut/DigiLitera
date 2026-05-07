@@ -112,7 +112,9 @@ const Home = {
     document.getElementById('home').innerHTML = `
       <div class="home-header">
         <div class="home-logo">
-          <div class="home-logomark">⚡</div>
+        <div class="home-logomark">
+  <img src="assets/logo.png" alt="DigiLitera Logo" loading="eager">
+</div>
           <span class="home-logotext">DigiLitera</span>
         </div>
         <button class="icon-btn" onclick="App.toggleTheme();Home.render()" title="Ganti Tema">${App.themeIcon()}</button>
