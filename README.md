@@ -42,12 +42,12 @@ DigiLitera/
 ├── js/
 │   ├── app.js
 │   └── quiz.js
-└── modules/
-    ├── mod-hoaks.js
-    ├── mod-etika.js
-    └── mod-privasi.js
-└── assets/          ← 
-    └── logo.png     ← 
+├── modules/
+│   ├── mod-hoaks.js
+│   ├── mod-etika.js
+│   └── mod-privasi.js
+└── assets/
+    └── logo.png 
 ```
 
 ---
