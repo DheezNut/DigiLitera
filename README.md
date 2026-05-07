@@ -46,6 +46,8 @@ DigiLitera/
     ├── mod-hoaks.js
     ├── mod-etika.js
     └── mod-privasi.js
+└── assets/          ← 
+    └── logo.png     ← 
 ```
 
 ---
