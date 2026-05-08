@@ -52,6 +52,11 @@ const App = {
   }
 };
 
+/* ── AUTO THEME ── */
+// Ikuti preferensi tema pengguna
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+document.documentElement.dataset.theme = prefersDark ? 'dark' : 'light';
+
 /* ── GRADE ── */
 function calcGrade(pct) {
   if (pct >= 90) return { g: 'S', rc: 'rS', gc: 'var(--grn)', gd: 'var(--grn-d)' };
